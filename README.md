@@ -22,6 +22,3 @@ Quick start
 Notes
 - Keep raw data in `data/`. Small sample CSVs are already included.
 - Update `requirements.txt` when adding new libraries.
-
-License
-This project does not include a license file. Add one if you plan to publish or share the code.
