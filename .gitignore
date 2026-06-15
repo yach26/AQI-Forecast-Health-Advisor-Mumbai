@@ -1,32 +1,38 @@
-# Byte-compiled / optimized / DLL files
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Bytecode and Cache
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
+# Streamlit Configuration and Secrets
+.streamlit/secrets.toml
 
-# Distribution / packaging
-*.egg-info/
-dist/
-build/
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
 
-# Virtual environments
-env/
-venv/
-.venv/
-ENV/
-
-# Jupyter
-.ipynb_checkpoints
-
-# IDEs
+# IDE / Editor Settings
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
 
-# OS files
+# OS-generated files
 .DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
 Thumbs.db
 
-# Environment variables
-.env
+# Project-specific ignored data and logs
+data/
+*.log
+*.tmp
