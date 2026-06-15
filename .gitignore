@@ -1,22 +1,47 @@
+# ===========================
 # Virtual Environments
+# ===========================
 .venv/
 venv/
 ENV/
 env/
 
+# ===========================
 # Python Bytecode and Cache
+# ===========================
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 
-# Streamlit Configuration and Secrets
+# ===========================
+# Distribution / Packaging
+# ===========================
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===========================
+# Streamlit Secrets (NEVER commit API keys)
+# ===========================
 .streamlit/secrets.toml
 
+# ===========================
+# Environment Variables
+# ===========================
+.env
+.env.*
+
+# ===========================
 # Jupyter Notebook Checkpoints
+# ===========================
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
 
+# ===========================
 # IDE / Editor Settings
+# ===========================
 .vscode/
 .idea/
 *.suo
@@ -24,15 +49,24 @@ __pycache__/
 *.njsproj
 *.sln
 *.swp
+*.swo
+*~
 
-# OS-generated files
+# ===========================
+# OS-generated Files
+# ===========================
 .DS_Store
 .DS_Store?
 ehthumbs.db
+ehthumbs_vista.db
 Icon?
 Thumbs.db
+desktop.ini
 
-# Project-specific ignored data and logs
+# ===========================
+# Project-specific
+# ===========================
 data/
 *.log
 *.tmp
+*.bak

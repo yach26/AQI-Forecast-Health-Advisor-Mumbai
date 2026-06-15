@@ -1,30 +1,48 @@
+"""
+Mumbai AQI Forecast & AI Health Advisor — Streamlit Dashboard
+
+This is the main entry point for the Streamlit application.
+Run with:  streamlit run app.py
+"""
+
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from utils import predict_aqi
+from utils import predict_aqi, load_feature_importance
 from llm_utils import generate_health_advice
 
+# ---------------------------------------------------------------------------
 # 1. Page Configuration
+# ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Mumbai AQI Forecast & Health Advisor",
     layout="wide",
-    page_icon="🌫️"
+    page_icon="🌫️",
 )
 
+# ---------------------------------------------------------------------------
 # Title
+# ---------------------------------------------------------------------------
 st.title("Mumbai AQI Forecast & Health Advisor")
 st.caption("Live 24-Hour AQI Forecast powered by XGBoost and Open-Meteo APIs")
 
 # Refresh button
 if st.button("Refresh Live Data"):
+    st.cache_data.clear()
     st.rerun()
 
-# Loading experience
-with st.spinner("Fetching latest Mumbai air quality data..."):
-    data = predict_aqi()
-
-st.success("Live forecast updated successfully.")
+# ---------------------------------------------------------------------------
+# Data Loading with error boundary
+# ---------------------------------------------------------------------------
+try:
+    with st.spinner("Fetching latest Mumbai air quality data..."):
+        data = predict_aqi()
+    st.success("Live forecast updated successfully.")
+except Exception as e:
+    st.error(f"⚠️ Could not load forecast data: {e}")
+    st.info("Please check your internet connection and try refreshing.")
+    st.stop()
 
 current_aqi = data["current_aqi"]
 forecast_aqi = data["forecast_aqi"]
@@ -32,28 +50,21 @@ category = data["category"]
 timestamp = data["timestamp"]
 forecast_timestamp = data["forecast_timestamp"]
 history = data["history"]
+confidence_lower = data["confidence_lower"]
+confidence_upper = data["confidence_upper"]
 
 delta = forecast_aqi - current_aqi
 
-# 1. Forecast Confidence Section
-lower = max(0, forecast_aqi - 15)
-upper = forecast_aqi + 15
-
-# Metrics block covering: 2. Current AQI, 3. Forecast AQI, 4. AQI Category, 5. Forecast Confidence
+# ---------------------------------------------------------------------------
+# 2–5. KPI Metrics Row
+# ---------------------------------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric(
-        label="Current AQI",
-        value=current_aqi
-    )
+    st.metric(label="Current AQI", value=current_aqi)
 
 with col2:
-    st.metric(
-        label="Forecast AQI",
-        value=forecast_aqi,
-        delta=delta
-    )
+    st.metric(label="Forecast AQI", value=forecast_aqi, delta=delta)
 
 with col3:
     st.write("**AQI Category**")
@@ -69,87 +80,107 @@ with col3:
 with col4:
     st.metric(
         label="Confidence Range",
-        value=f"{lower} to {upper}"
+        value=f"{confidence_lower} – {confidence_upper}",
     )
 
+# ---------------------------------------------------------------------------
 # 6. AQI Gauge
+# ---------------------------------------------------------------------------
 st.write("")
-fig_gauge = go.Figure(go.Indicator(
-    mode = "gauge+number",
-    value = forecast_aqi,
-    domain = {'x': [0, 1], 'y': [0, 1]},
-    gauge = {
-        'axis': {'range': [0, 400], 'tickwidth': 1, 'tickcolor': "gray"},
-        'bar': {'color': "#34495e"},
-        'bgcolor': "white",
-        'borderwidth': 2,
-        'bordercolor': "gray",
-        'steps': [
-            {'range': [0, 50], 'color': '#2ecc71'},
-            {'range': [50, 100], 'color': '#f1c40f'},
-            {'range': [100, 150], 'color': '#e67e22'},
-            {'range': [150, 200], 'color': '#e74c3c'},
-            {'range': [200, 300], 'color': '#9b59b6'},
-            {'range': [300, 400], 'color': '#78281f'}
-        ],
-    }
-))
+fig_gauge = go.Figure(
+    go.Indicator(
+        mode="gauge+number",
+        value=forecast_aqi,
+        domain={"x": [0, 1], "y": [0, 1]},
+        gauge={
+            "axis": {"range": [0, 400], "tickwidth": 1, "tickcolor": "gray"},
+            "bar": {"color": "#34495e"},
+            "bgcolor": "white",
+            "borderwidth": 2,
+            "bordercolor": "gray",
+            "steps": [
+                {"range": [0, 50], "color": "#2ecc71"},
+                {"range": [50, 100], "color": "#f1c40f"},
+                {"range": [100, 150], "color": "#e67e22"},
+                {"range": [150, 200], "color": "#e74c3c"},
+                {"range": [200, 300], "color": "#9b59b6"},
+                {"range": [300, 400], "color": "#78281f"},
+            ],
+        },
+    )
+)
 fig_gauge.update_layout(
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
     height=280,
     margin=dict(l=30, r=30, t=30, b=30),
 )
-st.plotly_chart(fig_gauge, use_container_width=True)
+st.plotly_chart(fig_gauge, width="stretch")
 
+# ---------------------------------------------------------------------------
 # 7. AQI Trend (Last 48 Hours)
+# ---------------------------------------------------------------------------
 st.subheader("Mumbai AQI Trend (Last 48 Hours)")
 history_copy = history.copy()
-history_copy["time"] = history_copy["time"].astype(str)
+history_copy["time"] = pd.to_datetime(history_copy["time"])
 fig_trend = px.line(
     history_copy,
     x="time",
     y="us_aqi",
-    title="Mumbai AQI Trend (Last 48 Hours)"
+    labels={"time": "Timestamp", "us_aqi": "AQI"},
 )
-fig_trend.update_layout(
-    xaxis_title="Timestamp",
-    yaxis_title="AQI"
-)
-st.plotly_chart(fig_trend, use_container_width=True)
+fig_trend.update_layout(xaxis_title="Timestamp", yaxis_title="AQI")
+st.plotly_chart(fig_trend, width="stretch")
 
+# ---------------------------------------------------------------------------
 # 8. Current Pollutant Levels
+# ---------------------------------------------------------------------------
 st.subheader("Current Pollutant Levels")
 latest_row = history.iloc[-1]
-pm25_val = latest_row["pm2_5"]
-pm10_val = latest_row["pm10"]
-no2_val = latest_row["nitrogen_dioxide"]
 
 col_p1, col_p2, col_p3 = st.columns(3)
 with col_p1:
-    st.metric(label="PM2.5", value=f"{pm25_val:.1f} µg/m³")
+    st.metric(label="PM2.5", value=f"{latest_row['pm2_5']:.1f} µg/m³")
 with col_p2:
-    st.metric(label="PM10", value=f"{pm10_val:.1f} µg/m³")
+    st.metric(label="PM10", value=f"{latest_row['pm10']:.1f} µg/m³")
 with col_p3:
-    st.metric(label="NO₂", value=f"{no2_val:.1f} µg/m³")
+    st.metric(label="NO₂", value=f"{latest_row['nitrogen_dioxide']:.1f} µg/m³")
 
+# ---------------------------------------------------------------------------
 # 9. AI Health Advisor
+# ---------------------------------------------------------------------------
 st.subheader("AI Health Advisor")
 with st.container(border=True):
     with st.spinner("Generating personalized recommendations..."):
-        advice = generate_health_advice(
-            forecast_aqi,
-            category
-        )
+        advice = generate_health_advice(forecast_aqi, category)
     st.markdown(advice)
 
+# ---------------------------------------------------------------------------
 # 10. Top Drivers Behind AQI Predictions
-st.subheader("Top Drivers Behind AQI Predictions")
-df_importance = pd.read_csv("model/feature_importance.csv")
-df_importance_sorted = df_importance.sort_values(by="Importance", ascending=True)
-st.bar_chart(df_importance_sorted, x="Importance", y="Feature", horizontal=True)
+# ---------------------------------------------------------------------------
+st.subheader("Top 10 Drivers Behind AQI Predictions")
+df_importance = load_feature_importance()
+if df_importance is not None and not df_importance.empty:
+    df_sorted = df_importance.sort_values(by="Importance", ascending=True)
+    fig_imp = px.bar(
+        df_sorted,
+        x="Importance",
+        y="Feature",
+        orientation="h",
+        labels={"Importance": "Feature Importance Score", "Feature": ""},
+    )
+    fig_imp.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),
+        height=350,
+        yaxis=dict(tickfont=dict(size=12)),
+    )
+    st.plotly_chart(fig_imp, width="stretch")
+else:
+    st.info("Feature importance data is not available.")
 
+# ---------------------------------------------------------------------------
 # 11. About This Forecasting Model
+# ---------------------------------------------------------------------------
 with st.expander("About This Forecasting Model"):
     st.markdown(
         """
@@ -179,18 +210,21 @@ with st.expander("About This Forecasting Model"):
 
 st.write("---")
 
-# 12. Last Updated & 13. Forecast Valid For
-st.write(
-    f"**Last Updated:** {timestamp.strftime('%d %b %Y, %I:%M %p')}"
-)
+# ---------------------------------------------------------------------------
+# 12–13. Timestamps
+# ---------------------------------------------------------------------------
+st.write(f"**Last Updated:** {timestamp.strftime('%d %b %Y, %I:%M %p')}")
 st.write(
     f"**Forecast Valid For:** {forecast_timestamp.strftime('%d %b %Y, %I:%M %p')}"
 )
 
+# ---------------------------------------------------------------------------
 # Sidebar
+# ---------------------------------------------------------------------------
 st.sidebar.title("Project Overview")
 st.sidebar.write(
-    "This application predicts Mumbai's AQI 24 hours ahead using a machine learning model trained on historical AQI and weather data."
+    "This application predicts Mumbai's AQI 24 hours ahead using a "
+    "machine learning model trained on historical AQI and weather data."
 )
 
 st.sidebar.subheader("Technology Stack")
@@ -198,9 +232,9 @@ st.sidebar.markdown(
     """
 - Streamlit
 - XGBoost
+- Groq (Llama-3.3)
 - Open-Meteo APIs
-- Pandas
-- Plotly
+- Pandas · Plotly
 """
 )
 
@@ -208,8 +242,8 @@ st.sidebar.subheader("Future Roadmap")
 st.sidebar.markdown(
     """
 - Multi-city forecasting
-- Groq-powered personalized health advisor
 - 48-hour and 72-hour forecasts
 - Push notifications
+- Mobile optimization
 """
 )
