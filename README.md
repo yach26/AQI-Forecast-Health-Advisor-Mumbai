@@ -53,12 +53,12 @@ This project forecasts Mumbai's **Air Quality Index (AQI) 24 hours ahead** using
 
 ```mermaid
 flowchart TD
-    A["🌐 Open-Meteo APIs"] -->|Air Quality + Weather| B["📥 Data Fetching"]
-    B --> C["⚙️ Feature Engineering"]
-    C -->|Lags, Rolling Stats, Cyclical| D["🤖 XGBoost Model"]
-    D -->|24h AQI Forecast| E["📊 Forecast + Confidence"]
-    E --> F["🧠 Groq Health Advisor"]
-    F -->|Recommendations| G["🖥️ Streamlit Dashboard"]
+    A["Open-Meteo APIs"] -->|Air Quality + Weather| B["Data Fetching"]
+    B --> C["Feature Engineering"]
+    C -->|Lags, Rolling Stats, Cyclical| D["XGBoost Model"]
+    D -->|24h AQI Forecast| E["Forecast + Confidence"]
+    E --> F["Groq Health Advisor"]
+    F -->|Recommendations| G["Streamlit Dashboard"]
 ```
 
 ---
@@ -110,7 +110,7 @@ Sine and cosine transformations of `hour` (period=24) and `month` (period=12) to
 
 ## 📈 Model Performance
 
-| Metric | Baseline (Linear Regression) | XGBoost Regressor |
+| Metric | Baseline (Naive Persistence) | XGBoost Regressor |
 |:---|:---:|:---:|
 | **MAE** | 10.45 | **9.86** |
 | **RMSE** | 15.88 | **14.80** |
