@@ -241,8 +241,6 @@ def predict_aqi():
 
     raw_df = fetch_live_data()
 
-    recent_history = raw_df.copy().tail(48)
-
     df = engineer_features(raw_df)
 
     if df.empty:
@@ -277,6 +275,11 @@ def predict_aqi():
     timestamp = latest["time"].iloc[0]
     forecast_timestamp = timestamp + pd.Timedelta(hours=24)
     category = get_category(prediction)
+
+    # Filter recent history to past 48 hours relative to the current timestamp:
+    raw_df_dt = raw_df.copy()
+    raw_df_dt["time"] = pd.to_datetime(raw_df_dt["time"])
+    recent_history = raw_df_dt[raw_df_dt["time"] <= timestamp].tail(48)
 
     return {
         "current_aqi": current_aqi,
