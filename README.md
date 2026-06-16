@@ -9,6 +9,11 @@
 
 ---
 
+### 🌐 Live Demo
+Check out the live interactive dashboard here: **[aqi-forecast-health-advisor-mumbai.streamlit.app](https://aqi-forecast-health-advisor-mumbai.streamlit.app/)**
+
+---
+
 ## 📌 Project Overview
 
 Air pollution is one of the most pressing public health challenges in Indian metropolitan cities. Mumbai, with its high population density and industrial activity, frequently experiences hazardous air quality levels that can trigger respiratory illness, cardiovascular problems, and reduced quality of life.
@@ -223,6 +228,13 @@ The trained model (`model/aqi_model_24h.pkl`) is included in this repository. To
 - The app fetches **7 days** of historical data at runtime to compute lag and rolling features.
 - No local dataset files are needed — all inference data comes from the Open-Meteo APIs.
 - Predictions are cached for 30 minutes (`st.cache_data(ttl=1800)`) to avoid excessive API calls.
+
+---
+
+## ⚠️ Design Decisions & Limitations
+
+- **Surrogate Modeling (Current Limitation):** The model is trained to predict Open-Meteo's forecasted AQI rather than ground-truth sensor measurements. While this works well for a proof-of-concept, it inherits any biases or inaccuracies of the Open-Meteo air quality model.
+- **Ground-Truth Target Transition (Roadmap):** A high-priority roadmap item is to ingest historical sensor observations directly from the Central Pollution Control Board (CPCB) using the OpenAQ API. This will train the XGBoost model to align physical local weather parameters directly with ground-truth local pollution data.
 
 ---
 

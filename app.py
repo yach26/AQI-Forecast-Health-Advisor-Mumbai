@@ -1,10 +1,3 @@
-"""
-Mumbai AQI Forecast & AI Health Advisor — Streamlit Dashboard
-
-This is the main entry point for the Streamlit application.
-Run with:  streamlit run app.py
-"""
-
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -12,35 +5,27 @@ import pandas as pd
 from utils import predict_aqi, load_feature_importance
 from llm_utils import generate_health_advice
 
-# ---------------------------------------------------------------------------
-# 1. Page Configuration
-# ---------------------------------------------------------------------------
+
 st.set_page_config(
     page_title="Mumbai AQI Forecast & Health Advisor",
     layout="wide",
     page_icon="🌫️",
 )
 
-# ---------------------------------------------------------------------------
-# Title
-# ---------------------------------------------------------------------------
+
 st.title("Mumbai AQI Forecast & Health Advisor")
 st.caption("Live 24-Hour AQI Forecast powered by XGBoost and Open-Meteo APIs")
 
-# Refresh button
 if st.button("Refresh Live Data"):
     st.cache_data.clear()
     st.rerun()
 
-# ---------------------------------------------------------------------------
-# Data Loading with error boundary
-# ---------------------------------------------------------------------------
 try:
     with st.spinner("Fetching latest Mumbai air quality data..."):
         data = predict_aqi()
     st.success("Live forecast updated successfully.")
 except Exception as e:
-    st.error(f"⚠️ Could not load forecast data: {e}")
+    st.error(f"Could not load forecast data: {e}")
     st.info("Please check your internet connection and try refreshing.")
     st.stop()
 
@@ -55,9 +40,6 @@ confidence_upper = data["confidence_upper"]
 
 delta = forecast_aqi - current_aqi
 
-# ---------------------------------------------------------------------------
-# 2–5. KPI Metrics Row
-# ---------------------------------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -83,9 +65,7 @@ with col4:
         value=f"{confidence_lower} – {confidence_upper}",
     )
 
-# ---------------------------------------------------------------------------
-# 6. AQI Gauge
-# ---------------------------------------------------------------------------
+
 st.write("")
 fig_gauge = go.Figure(
     go.Indicator(
@@ -117,9 +97,7 @@ fig_gauge.update_layout(
 )
 st.plotly_chart(fig_gauge, width="stretch")
 
-# ---------------------------------------------------------------------------
-# 7. AQI Trend (Last 48 Hours)
-# ---------------------------------------------------------------------------
+
 st.subheader("Mumbai AQI Trend (Last 48 Hours)")
 history_copy = history.copy()
 history_copy["time"] = pd.to_datetime(history_copy["time"])
@@ -132,9 +110,6 @@ fig_trend = px.line(
 fig_trend.update_layout(xaxis_title="Timestamp", yaxis_title="AQI")
 st.plotly_chart(fig_trend, width="stretch")
 
-# ---------------------------------------------------------------------------
-# 8. Current Pollutant Levels
-# ---------------------------------------------------------------------------
 st.subheader("Current Pollutant Levels")
 latest_row = history.iloc[-1]
 
@@ -146,18 +121,13 @@ with col_p2:
 with col_p3:
     st.metric(label="NO₂", value=f"{latest_row['nitrogen_dioxide']:.1f} µg/m³")
 
-# ---------------------------------------------------------------------------
-# 9. AI Health Advisor
-# ---------------------------------------------------------------------------
+
 st.subheader("AI Health Advisor")
 with st.container(border=True):
     with st.spinner("Generating personalized recommendations..."):
         advice = generate_health_advice(forecast_aqi, category)
     st.markdown(advice)
 
-# ---------------------------------------------------------------------------
-# 10. Top Drivers Behind AQI Predictions
-# ---------------------------------------------------------------------------
 st.subheader("Top 10 Drivers Behind AQI Predictions")
 df_importance = load_feature_importance()
 if df_importance is not None and not df_importance.empty:
@@ -178,9 +148,7 @@ if df_importance is not None and not df_importance.empty:
 else:
     st.info("Feature importance data is not available.")
 
-# ---------------------------------------------------------------------------
-# 11. About This Forecasting Model
-# ---------------------------------------------------------------------------
+
 with st.expander("About This Forecasting Model"):
     st.markdown(
         """
@@ -210,17 +178,12 @@ with st.expander("About This Forecasting Model"):
 
 st.write("---")
 
-# ---------------------------------------------------------------------------
-# 12–13. Timestamps
-# ---------------------------------------------------------------------------
+
 st.write(f"**Last Updated:** {timestamp.strftime('%d %b %Y, %I:%M %p')}")
 st.write(
     f"**Forecast Valid For:** {forecast_timestamp.strftime('%d %b %Y, %I:%M %p')}"
 )
 
-# ---------------------------------------------------------------------------
-# Sidebar
-# ---------------------------------------------------------------------------
 st.sidebar.title("Project Overview")
 st.sidebar.write(
     "This application predicts Mumbai's AQI 24 hours ahead using a "
