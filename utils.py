@@ -251,7 +251,14 @@ def predict_aqi():
             "The Open-Meteo APIs may be returning incomplete data."
         )
 
-    latest = df.iloc[-1:]
+    # Filter to only rows at or before now, then take the last one:
+    now = pd.Timestamp.now(tz="UTC").tz_localize(None)  # or remove tz if your data has no tz
+    df_past = df[df["time"] <= now]
+
+    if df_past.empty:
+        raise ValueError("No past data rows found after filtering to current time.")
+
+    latest = df_past.iloc[-1:]
 
     # Validate that all expected features are present
     missing_cols = set(feature_columns) - set(latest.columns)
