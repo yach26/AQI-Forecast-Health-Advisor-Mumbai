@@ -742,16 +742,30 @@ with tab_model:
   except FileNotFoundError:
     st.info("Feature importance file not found at `notebooks/model/feature_importance.csv`.")
 
-  # Model performance table
+  # Model performance table — v2 metrics loaded from cv_summary.json (ground truth)
   st.markdown('<div class="section-title"> Model Performance Benchmarks</div>', unsafe_allow_html=True)
+
+  import json as _json
+  _cv_path = Path("notebooks/model/cv_summary.json")
+  if _cv_path.exists():
+    with open(_cv_path) as _f:
+      _cv = _json.load(_f)
+    _v2_mae  = f"{_cv['mae_mean']:.2f} ±{_cv['mae_std']:.2f}"
+    _v2_rmse = f"{_cv['rmse_mean']:.2f} ±{_cv['rmse_std']:.2f}"
+    _v2_r2   = f"{_cv['r2_mean']:.3f} ±{_cv['r2_std']:.3f}"
+    _v2_note = f"5-fold TimeSeriesSplit CV · {_cv.get('training_rows', 21115):,} rows · {_cv.get('n_features', 77)} features"
+  else:
+    _v2_mae, _v2_rmse, _v2_r2, _v2_note = "2.24 ±0.99", "5.28 ±2.32", "0.979 ±0.022", "5-fold TimeSeriesSplit CV"
+
   perf_df = pd.DataFrame({
-    "Model": ["Baseline (Linear Regression)", "XGBoost — 1yr data (v1)", "XGBoost — 5yr data (v2 )"],
-    "MAE":  [10.45, 9.86, "~7.2"],
-    "RMSE": [15.88, 14.80, "~9.2"],
-    "R²":  [0.565, 0.623, "~0.78"],
-    "Training Rows": ["~8,760", "~8,760", "~43,800"],
+    "Model": ["Baseline (Linear Regression)", "XGBoost — 1yr data (v1)", "XGBoost — 5yr data (v2, CV)"],
+    "MAE":   [10.45, 9.86, _v2_mae],
+    "RMSE":  [15.88, 14.80, _v2_rmse],
+    "R²":    [0.565, 0.623, _v2_r2],
+    "Training Rows": ["~8,760", "~8,760", "~21,115"],
   })
   st.dataframe(perf_df, use_container_width=True, hide_index=True)
+  st.caption(f"v2 metrics: {_v2_note}. Prior versions used approximate placeholder values.")
 
   # Feature engineering expander
   with st.expander(" Feature Engineering Details"):
