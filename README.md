@@ -23,7 +23,7 @@
 
 I live in Mumbai. During winter months the air sometimes burns your eyes just standing outside. I'd check apps, but they'd show a generic "Moderate" label and give no context for *what that means for me personally* or *what to expect tomorrow*. I wanted to build something that actually answered those questions.
 
-This project started as a weekend experiment. It ended up taking 3 months and teaching me more about ML engineering than anything else I've done.
+This project started as a weekend experiment. It ended up taking half a month and teaching me more about ML engineering than anything else I've done.
 
 ### Version 1 — "It Works But I Have No Idea If It's Right"
 
@@ -258,8 +258,35 @@ Training rows: 21,115 | Features: 77
 
 ### Held-Out Test Set (Oct–Dec 2024)
 
-> Run `python src/train.py` to generate test set results.
-> See `reports/final_metrics.md` for the full report.
+Evaluated exactly once after all decisions were finalized.
+
+| Metric | Value |
+|--------|-------|
+| **MAE** | **1.431** |
+| **RMSE** | **2.734** |
+| **R²** | **0.9964** |
+| Samples | 2,208 |
+
+---
+
+## 🚨 The Truth About The 0.99 R² (Why It's Still "Wrong")
+
+You might look at an R² of 0.996 and think this is the greatest weather model ever built. **It is not. It is actually answering the wrong question.**
+
+While I fixed the *cross-validation* leakage (using `TimeSeriesSplit`), there is still a fundamental horizon mismatch in the *features*. 
+
+The project claims to "forecast AQI up to 24 hours ahead". However, the most important features in the model are `aqi_lag_1`, `aqi_roll_mean_3`, etc. 
+
+If you are trying to predict the AQI for tomorrow at 5 PM (24 hours from now), you **do not have** the AQI for tomorrow at 4 PM (`aqi_lag_1`). The most recent data you have is from *right now* (`aqi_lag_24`). 
+
+Because the model was trained using `aqi_lag_1` to predict the target `us_aqi`, it is effectively a **1-hour ahead forecasting model**, not a 24-hour ahead model. It achieves near-perfect accuracy because the air quality 1 hour from now is almost exactly the same as the air quality right now. 
+
+**To build a true 24-hour ahead model, I would need to:**
+1. Drop all lags smaller than 24 hours (`lag_1` through `lag_23`).
+2. Only use weather forecasts (not historical weather) for the future 24-hour window.
+3. Or, build an autoregressive / recursive model that predicts `t+1`, feeds that prediction back in as the new `lag_1`, predicts `t+2`, and so on up to `t+24` (where errors compound rapidly).
+
+The current model is highly accurate for real-time nowcasting and 1-hour look-aheads, but the 24-hour dashboard simulation is using a mean-reversion trick because the XGBoost model mathematically cannot forecast 24 hours ahead without future lag data.
 
 ---
 

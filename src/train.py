@@ -64,8 +64,8 @@ REPORT_DIR = ROOT / "reports"
 # Train  : Jan 2020 – Jun 2024
 # Val    : Jul 2024 – Sep 2024   (used for Optuna tuning only)
 # Test   : Oct 2024 – Dec 2024   (held out, evaluated once)
-VAL_START  = pd.Timestamp("2024-07-01")
-TEST_START = pd.Timestamp("2024-10-01")
+VAL_START  = pd.Timestamp("2024-07-01", tz="Asia/Kolkata")
+TEST_START = pd.Timestamp("2024-10-01", tz="Asia/Kolkata")
 
 # ── Features to exclude (leakage or non-predictive at inference time) ─────────
 EXCLUDE_COLS = [

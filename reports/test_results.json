@@ -1,25 +1,24 @@
 {
   "split": {
-    "train_end": "2024-06-30",
-    "val_end": "2024-09-30",
+    "train_end": "2024-07-01",
+    "val_end": "2024-10-01",
     "test_start": "2024-10-01"
   },
   "test_metrics": {
-    "note": "Run python src/train.py to populate with real test set results",
-    "mae": null,
-    "rmse": null,
-    "r2": null,
-    "n_samples": null
+    "mae": 1.431,
+    "rmse": 2.734,
+    "r2": 0.9964,
+    "n_samples": 2208
   },
   "cv_metrics": {
     "n_splits": 5,
-    "mae_mean": 2.243,
-    "mae_std": 0.986,
-    "rmse_mean": 5.284,
-    "rmse_std": 2.318,
-    "r2_mean": 0.9787,
-    "r2_std": 0.0223,
-    "n_features": 77,
-    "training_rows": 21115
+    "mae_mean": 2.279,
+    "mae_std": 1.087,
+    "rmse_mean": 5.48,
+    "rmse_std": 2.739,
+    "r2_mean": 0.9818,
+    "r2_std": 0.0186,
+    "n_features": 80,
+    "training_rows": 16699
   }
 }
