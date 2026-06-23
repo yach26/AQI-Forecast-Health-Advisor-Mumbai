@@ -11,7 +11,9 @@
 
 ## Live Demo
 
-> Deploy to [Streamlit Community Cloud](https://streamlit.io/cloud) — see [Installation](#installation) to run locally.
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://aqi-forecast-health-advisor-mumbai.streamlit.app/)
+
+**[https://aqi-forecast-health-advisor-mumbai.streamlit.app/](https://aqi-forecast-health-advisor-mumbai.streamlit.app/)**
 
 ---
 
