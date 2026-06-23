@@ -746,15 +746,14 @@ with tab_model:
   st.markdown('<div class="section-title"> Model Performance Benchmarks</div>', unsafe_allow_html=True)
 
   import json as _json
-  _cv_path = Path("notebooks/model/cv_summary.json")
-  if _cv_path.exists():
-    with open(_cv_path) as _f:
+  try:
+    with open("notebooks/model/cv_summary.json") as _f:
       _cv = _json.load(_f)
     _v2_mae  = f"{_cv['mae_mean']:.2f} ±{_cv['mae_std']:.2f}"
     _v2_rmse = f"{_cv['rmse_mean']:.2f} ±{_cv['rmse_std']:.2f}"
     _v2_r2   = f"{_cv['r2_mean']:.3f} ±{_cv['r2_std']:.3f}"
     _v2_note = f"5-fold TimeSeriesSplit CV · {_cv.get('training_rows', 21115):,} rows · {_cv.get('n_features', 77)} features"
-  else:
+  except (FileNotFoundError, KeyError):
     _v2_mae, _v2_rmse, _v2_r2, _v2_note = "2.24 ±0.99", "5.28 ±2.32", "0.979 ±0.022", "5-fold TimeSeriesSplit CV"
 
   perf_df = pd.DataFrame({
