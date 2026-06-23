@@ -71,3 +71,8 @@ data/
 *.tmp
 *.bak
 *.sqlite
+
+data/*.csv
+pytest_cache/
+.pytest_cache/
+reports/evaluation_report.json

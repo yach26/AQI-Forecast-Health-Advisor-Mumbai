@@ -797,7 +797,8 @@ with tab_model:
 
 # ──────────────────────────── TAB 6: 7-DAY COMPARISON ───────────────────────
 with tab_compare:
-  st.markdown('<div class=\"section-title\"> 7-Day AQI Forecast Comparison</div>', unsafe_allow_html=True)
+  st.markdown('<div class="section-title"> 7-Day Scenario Outlook</div>', unsafe_allow_html=True)
+  st.caption("Methodology: The 'Model' column uses a seasonal mean-reversion simulation, not true recursive XGBoost forecasting. The 'Official' column is the raw Open-Meteo API forecast. See reports/final_metrics.md for evaluation details.")
   st.caption(
     "Compares the **Open-Meteo official 7-day air quality forecast** (the same source "
     "that powered your training data) against your **XGBoost model's rolling predictions**. "
