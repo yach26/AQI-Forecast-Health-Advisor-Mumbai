@@ -51,7 +51,7 @@ The solution was separating *training-time feature engineering* from *inference-
 - **Evaluation:** `TimeSeriesSplit(n_splits=5, gap=24)` — the 24-hour gap prevents the model from essentially predicting the immediate future using data from an hour ago in a different split.
 - **Inference:** The live dashboard fetches 7 past days of data specifically to build a 72-hour lag history before making the current prediction.
 
-I also expanded from 1 year → 5 years of data, added 40+ new features (boundary layer height, festival flags, dew point, UV index), and ran 100 Optuna trials to tune hyperparameters.
+I also expanded from 1 year → ~2.4 years of data, added 40+ new features (boundary layer height, festival flags, dew point, UV index), and ran 100 Optuna trials to tune hyperparameters.
 
 The result: **R² went from 0.62 → 0.979**.
 
@@ -93,7 +93,7 @@ I implemented a seasonal mean-reversion simulation for the "Model" column in the
                         │
 ┌───────────────────────▼────────────────────────────────────┐
 │              XGBoost Model (v2)                            │
-│  5-year training data  |  100 Optuna trials                │
+│  ~2.4 years training data |  100 Optuna trials              │
 │  TimeSeriesSplit CV    |  77 features                      │
 └─────────────┬──────────────────┬──────────────────────────┘
               │                  │
@@ -123,10 +123,10 @@ I implemented a seasonal mean-reversion simulation for the "Model" column in the
 |----------|-------|
 | Source | Open-Meteo Historical Air Quality + Weather Archive APIs |
 | Location | Mumbai, Maharashtra (19.0760°N, 72.8777°E) |
-| Period | Jan 2020 – Dec 2024 (5 years) |
+| Period | Aug 2022 – Dec 2024 (~2.4 years) |
 | Frequency | Hourly |
-| Rows | ~43,800 |
-| Size | ~15 MB |
+| Rows | 21,115 |
+| Size | ~14.6 MB |
 
 ### Reproducibility
 
@@ -194,7 +194,7 @@ Flagged on the festival day AND the following day (pollution lingers 12–24h).
 ### Pipeline
 
 ```
-Raw Data (5yr, 43,800 rows)
+Raw Data (~2.4yr, 21,115 rows)
          │
          ▼
 Feature Engineering  ← Computed on sorted full dataset (causal)
@@ -202,7 +202,7 @@ Feature Engineering  ← Computed on sorted full dataset (causal)
     ┌────┴──────────────────────────────────────────────────┐
     │                  │                   │                │
   Train             Val               (never seen)       Test
-Jan 2020–         Jul 2024–            ↑                Oct 2024–
+Aug 2022–         Jul 2024–            ↑                Oct 2024–
 Jun 2024          Sep 2024          Leakage             Dec 2024
   (~80%)           (~10%)          firewall              (~10%)
     │                  │
@@ -254,7 +254,7 @@ Best params found: `n_estimators=800, max_depth=7, learning_rate=0.044`
 | **RMSE** | **5.28** | ±2.32 |
 | **R²** | **0.979** | ±0.022 |
 
-Training rows: 21,115 | Features: 77
+Training rows: ~16,892 (~80%) | Features: 77
 
 ### Held-Out Test Set (Oct–Dec 2024)
 
@@ -395,7 +395,7 @@ AQI-Forecast-Health-Advisor-Mumbai/
 │
 ├── src/                            # Production source code
 │   ├── __init__.py
-│   ├── build_dataset.py            # Fetch + engineer 5yr dataset
+│   ├── build_dataset.py            # Fetch + engineer ~2.4yr dataset
 │   ├── train.py                    # Full training pipeline
 │   ├── evaluate.py                 # Standalone evaluation
 │   ├── core_utils.py               # Live inference + feature engineering
