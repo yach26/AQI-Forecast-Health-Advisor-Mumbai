@@ -51,7 +51,7 @@ The solution was separating *training-time feature engineering* from *inference-
 - **Evaluation:** `TimeSeriesSplit(n_splits=5, gap=24)` — the 24-hour gap prevents the model from essentially predicting the immediate future using data from an hour ago in a different split.
 - **Inference:** The live dashboard fetches 7 past days of data specifically to build a 72-hour lag history before making the current prediction.
 
-I also expanded from 1 year → ~2.4 years of data, added 40+ new features (boundary layer height, festival flags, dew point, UV index), and ran 100 Optuna trials to tune hyperparameters.
+I also expanded from 1 year → ~2.4 years of data, added 40+ new features (boundary layer height, festival flags, dew point, UV index), and ran Optuna optimization to tune hyperparameters.
 
 The result: **R² went from 0.62 → 0.979**.
 
@@ -63,13 +63,13 @@ When Streamlit's caching serialized a DataFrame to JSON for the 7-day comparison
 
 **Challenge 2: Feature alignment at inference time**
 
-The training set had 77 features including wind direction dummies (`wdir_NE`, `wdir_SW`, etc.) that are only created when those wind directions actually appear in data. If the live API returns wind data with directions not seen in the 7-day window, those dummy columns are missing.
+The training set had 80 features including wind direction dummies (`wdir_NE`, `wdir_SW`, etc.) that are only created when those wind directions actually appear in data. If the live API returns wind data with directions not seen in the 7-day window, those dummy columns are missing.
 
 Solution: At inference time, iterate through the training feature list and fill any missing columns with `0.0` before passing to the model.
 
 **Challenge 3: Honest 7-day forecasting**
 
-True recursive forecasting (predict t+24 → use as lag → predict t+48 → ...) requires all future weather inputs, which Open-Meteo provides for 7 days. But the model expects ~77 features including rolling AQI statistics — and future AQI is what we're trying to predict.
+True recursive forecasting (predict t+24 → use as lag → predict t+48 → ...) requires all future weather inputs, which Open-Meteo provides for 7 days. But the model expects ~80 features including rolling AQI statistics — and future AQI is what we're trying to predict.
 
 I implemented a seasonal mean-reversion simulation for the "Model" column in the 7-day tab, and clearly labeled it as a scenario-based outlook rather than a true recursive forecast. The honest labeling matters more than faking accuracy.
 
@@ -93,8 +93,8 @@ I implemented a seasonal mean-reversion simulation for the "Model" column in the
                         │
 ┌───────────────────────▼────────────────────────────────────┐
 │              XGBoost Model (v2)                            │
-│  ~2.4 years training data |  100 Optuna trials              │
-│  TimeSeriesSplit CV    |  77 features                      │
+│  ~2.4 years training data |  Optuna optimization           │
+│  TimeSeriesSplit CV    |  80 features                      │
 └─────────────┬──────────────────┬──────────────────────────┘
               │                  │
 ┌─────────────▼──────┐   ┌──────▼──────────────────────────┐
@@ -140,7 +140,7 @@ python src/build_dataset.py
 
 ## Feature Engineering
 
-77 features across 8 groups:
+80 features across 8 groups:
 
 ### Temporal (7 features)
 | Feature | Reasoning |
@@ -211,7 +211,7 @@ Jun 2024          Sep 2024          Leakage             Dec 2024
   CV on Train only     │
     │                  │
     ▼                  ▼
-Optuna HPO (100 trials, minimizing val RMSE)
+Optuna HPO (minimizing val RMSE)
     │
     ▼
 Final Model trained on Train + Val
@@ -226,7 +226,7 @@ Evaluated ONCE on Test set
 
 ### Hyperparameter Optimization
 
-Optuna `TPESampler` with 100 trials. Search space:
+Optuna `TPESampler`. Search space:
 
 | Parameter | Range |
 |-----------|-------|
@@ -240,7 +240,7 @@ Optuna `TPESampler` with 100 trials. Search space:
 | `reg_alpha` | 0.0–2.0 |
 | `reg_lambda` | 0.5–3.0 |
 
-Best params found: `n_estimators=800, max_depth=7, learning_rate=0.044`
+Best params found: `n_estimators=1100, max_depth=8, learning_rate=0.117`
 
 ---
 
@@ -250,11 +250,11 @@ Best params found: `n_estimators=800, max_depth=7, learning_rate=0.044`
 
 | Metric | Mean | Std |
 |--------|------|-----|
-| **MAE** | **2.24** | ±0.99 |
-| **RMSE** | **5.28** | ±2.32 |
-| **R²** | **0.979** | ±0.022 |
+| **MAE** | **2.279** | ±1.087 |
+| **RMSE** | **5.48** | ±2.739 |
+| **R²** | **0.9818** | ±0.0186 |
 
-Training rows: ~16,892 (~80%) | Features: 77
+Training rows: 16,699 | Features: 80
 
 ### Held-Out Test Set (Oct–Dec 2024)
 
@@ -407,7 +407,7 @@ AQI-Forecast-Health-Advisor-Mumbai/
 │   ├── 02_train_model_v2.ipynb     # Interactive training + SHAP
 │   ├── backup/                     # Archived experiments
 │   └── model/                      # Model artifacts
-│       ├── xgb_model_v2.pkl        # Trained XGBoost model (4.1 MB)
+│       ├── xgb_model_v2.pkl        # Trained XGBoost model (2.8 MB)
 │       ├── feature_cols_v2.pkl     # Feature column list
 │       ├── feature_importance.csv  # XGBoost gain scores
 │       ├── shap_summary.csv        # Mean |SHAP| per feature
